@@ -555,11 +555,11 @@ def main():
     #阶梯挂单数量
     n = 4
     #第一次挂单价
-    first_entry_price = 2320
+    first_entry_price = 2322
     #价格步长
-    entry_price_step = 4
+    entry_price_step = 5
     #第一次止盈价
-    first_take_profit_price = 2310
+    first_take_profit_price = 2308
     #止盈步长
     take_profit_step = 0
     #第一次止损价
@@ -569,7 +569,7 @@ def main():
     #杠杆
     leverage = 100
     #单笔开仓保证金
-    order_usdt_amount = 1
+    order_usdt_amount = 2
 
     trading_strategy(
         n,
