@@ -19,4 +19,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install httpx==0.27.2
       - name: 运行脚本
-        run: python "ETH开空实盘GitHub.py"
+        run: |
+          # python "ETH开空实盘GitHub.py" &
+          python "ETH开空实盘阶梯挂单GitHub.py" &
+          wait
+             
