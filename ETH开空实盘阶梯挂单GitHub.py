@@ -565,7 +565,7 @@ def main():
     #第一次止损价
     first_stop_loss_price = 2365
     #止损步长
-    stop_loss_step = 2
+    stop_loss_step = 0
     #杠杆
     leverage = 100
     #单笔开仓保证金
