@@ -1,6 +1,6 @@
 name: 运行ETH实盘脚本
 
-# on:
+on:
 #   push:
 #     branches: [ main ]
   workflow_dispatch:
