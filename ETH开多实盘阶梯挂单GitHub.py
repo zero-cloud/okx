@@ -555,17 +555,17 @@ def main():
     #阶梯挂单数量
     n = 4
     #第一次挂单价
-    first_entry_price = 2320
+    first_entry_price = 2300
     #价格步长
     entry_price_step = 4
     #第一次止盈价
-    first_take_profit_price = 2310
+    first_take_profit_price = 2320
     #止盈步长
     take_profit_step = 0
     #第一次止损价
-    first_stop_loss_price = 2365
+    first_stop_loss_price = 2280
     #止损步长
-    stop_loss_step = 2
+    stop_loss_step = 0
     #杠杆
     leverage = 100
     #单笔开仓保证金
