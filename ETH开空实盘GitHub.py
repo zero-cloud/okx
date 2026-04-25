@@ -289,6 +289,36 @@ def get_pending_entry_order(order_id):
     return None
 
 
+def get_same_pending_entry_order(entry_price):
+    global simulated_entry_order
+
+    if LOCAL_SIMULATION:
+        if not simulated_entry_order:
+            return None
+        if abs(float(simulated_entry_order.get("px", 0)) - float(entry_price)) < 1e-8:
+            return simulated_entry_order
+        return None
+
+    request_path = f"/api/v5/trade/orders-pending?instId={INST_ID}"
+    url = f"{BASE_URL}{request_path}"
+    headers = get_headers("GET", request_path)
+    response = client.get(url, headers=headers)
+    data = response.json()
+    if data["code"] != "0":
+        print(f"[{now_str()}] 查询挂单失败: {data}，本轮不再新增挂单")
+        return QUERY_FAILED
+
+    for order in data["data"]:
+        if (
+            order.get("side") == "sell"
+            and order.get("posSide") == "short"
+            and order.get("ordType") == "limit"
+            and abs(float(order.get("px", "0")) - float(entry_price)) < 1e-8
+        ):
+            return order
+    return None
+
+
 def get_balance():
     if LOCAL_SIMULATION:
         return 10000.0
@@ -316,6 +346,16 @@ def trading_strategy(entry_price, take_profit_price, leverage, stop_loss_price, 
     )
 
     active_entry_order_id = None
+    startup_pending_entry = get_same_pending_entry_order(entry_price)
+    if startup_pending_entry is QUERY_FAILED:
+        print(f"[{now_str()}] 启动时挂单查询失败，将在循环中继续重试")
+    elif startup_pending_entry:
+        active_entry_order_id = startup_pending_entry.get("ordId")
+        print(
+            f"[{now_str()}] 启动检测到同价挂单: ordId={startup_pending_entry.get('ordId')}, "
+            f"price={startup_pending_entry.get('px')}, qty={startup_pending_entry.get('sz')}"
+        )
+
     protection_set = False
 
     while True:
@@ -348,6 +388,20 @@ def trading_strategy(entry_price, take_profit_price, leverage, stop_loss_price, 
                 continue
 
             protection_set = False
+
+            if not active_entry_order_id:
+                same_pending_entry = get_same_pending_entry_order(entry_price)
+                if same_pending_entry is QUERY_FAILED:
+                    time.sleep(interval)
+                    continue
+                if same_pending_entry:
+                    active_entry_order_id = same_pending_entry.get("ordId")
+                    print(
+                        f"[{now_str()}] 检测到同价挂单: ordId={same_pending_entry.get('ordId')}, "
+                        f"price={same_pending_entry.get('px')}, qty={same_pending_entry.get('sz')}"
+                    )
+                    time.sleep(interval)
+                    continue
 
             pending_entry = get_pending_entry_order(active_entry_order_id)
             if pending_entry is QUERY_FAILED:
