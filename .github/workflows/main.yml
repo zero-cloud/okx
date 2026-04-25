@@ -26,7 +26,7 @@ jobs:
           SCRIPTS=(
             # "ETH开空实盘GitHub.py" 
             "ETH开空实盘阶梯挂单GitHub.py"   
-            "第三个脚本.py"
+            "BTC开空实盘阶梯挂单GitHub.py"
           )
 
           # 5小时 = 18000秒
