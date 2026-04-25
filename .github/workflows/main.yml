@@ -25,8 +25,10 @@ jobs:
           # 定义要运行的多个Python文件（你可以自己增删）
           SCRIPTS=(
             # "ETH开空实盘GitHub.py" 
-            "ETH开空实盘阶梯挂单GitHub.py"   
-            "BTC开空实盘阶梯挂单GitHub.py"
+            # "ETH开空实盘阶梯挂单GitHub.py"   
+            # "BTC开空实盘阶梯挂单GitHub.py"
+            "ETH开多实盘阶梯挂单GitHub.py"   
+            "BTC开多实盘阶梯挂单GitHub.py"
           )
 
           # 5小时 = 18000秒
