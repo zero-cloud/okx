@@ -553,11 +553,11 @@ def trading_strategy(
 
 def main():
     #阶梯挂单数量
-    n = 4
+    n = 3
     #第一次挂单价
     first_entry_price = 77900
     #价格步长
-    entry_price_step = 150
+    entry_price_step = 200
     #第一次止盈价
     first_take_profit_price = 77400
     #止盈步长
