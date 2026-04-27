@@ -1,12 +1,13 @@
-name: 运行ETH实盘脚本（循环5小时重启）
+name: 运行ETH实盘脚本（接力版）
 
 on:
-  # 关闭自动运行，只保留手动触发
   workflow_dispatch:
 
 jobs:
-  run-script-loop:
+  run-script:
     runs-on: ubuntu-latest
+    timeout-minutes: 300  # 5小时后自动结束，不触发6小时限制
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,43 +21,45 @@ jobs:
           python -m pip install --upgrade pip
           pip install httpx==0.27.2
 
-      - name: 循环运行脚本（5小时一轮，永不停止）
+      - name: 运行脚本 5 小时
         run: |
-          # 定义要运行的多个Python文件（你可以自己增删）
           SCRIPTS=(
             # "ETH开空实盘GitHub.py" 
             "ETH开空实盘阶梯挂单GitHub.py"   
             "BTC开空实盘阶梯挂单GitHub.py"
             # "ETH开多实盘阶梯挂单GitHub.py"   
             # "BTC开多实盘阶梯挂单GitHub.py"
+            # 其他脚本
           )
 
-          # 5小时 = 18000秒
-          RUN_DURATION=18000
-
-          echo "=== 启动无限循环：每5小时重启一次 ==="
-
-          # 永久循环
-          while true; do
-            echo "====================================="
-            echo "新一轮启动：$(date)"
-            echo "====================================="
-
-            # 并行启动所有脚本
-            for script in "${SCRIPTS[@]}"; do
-              if [ -f "$script" ]; then
-                echo "启动脚本：$script"
-                python "$script" &
-              else
-                echo "脚本不存在：$script"
-              fi
-            done
-
-            # 运行 5 小时
-            sleep $RUN_DURATION
-
-            # 5小时后，杀死所有Python进程，准备重启
-            echo "5小时已到，重启所有脚本..."
-            pkill -f "python" || true
-            sleep 2
+          pids=()
+          for script in "${SCRIPTS[@]}"; do
+            if [ -f "$script" ]; then
+              python "$script" &
+              pids+=($!)
+            fi
           done
+
+          # 运行 5 小时
+          sleep 18000
+
+          # 结束进程
+          for pid in "${pids[@]}"; do
+            kill $pid || true
+          done
+
+  # 关键：跑完自动再触发一次自己，实现无限接力
+  trigger-next-run:
+    needs: run-script
+    runs-on: ubuntu-latest
+    steps:
+      - name: 触发下一轮运行
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: context.workflow,
+              ref: context.ref
+            })
