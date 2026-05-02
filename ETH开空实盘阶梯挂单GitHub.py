@@ -559,9 +559,9 @@ def main():
     #价格步长
     entry_price_step = 20
     #第一次止盈价
-    first_take_profit_price = 2308
+    first_take_profit_price = 2285
     #止盈步长
-    take_profit_step = 0
+    take_profit_step = 10
     #第一次止损价
     first_stop_loss_price = 2400
     #止损步长
