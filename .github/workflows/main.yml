@@ -1,4 +1,4 @@
-name: 运行ETH实盘脚本（接力版）
+name: 运行ETH实盘脚本（稳定接力版）
 
 on:
   workflow_dispatch:
@@ -6,7 +6,8 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
-    timeout-minutes: 300  # 5小时后自动结束，不触发6小时限制
+    # Job 超时设为 6 小时，给脚本 5 小时运行 + 55秒结束的缓冲
+    timeout-minutes: 360
 
     steps:
       - uses: actions/checkout@v4
@@ -21,45 +22,62 @@ jobs:
           python -m pip install --upgrade pip
           pip install httpx==0.27.2
 
-      - name: 运行脚本 5 小时
+      - name: 运行脚本（4小时55分后主动退出）
         run: |
+          # 在这里写你要运行的所有脚本
           SCRIPTS=(
-            # "ETH开空实盘GitHub.py" 
-            "ETH开空实盘阶梯挂单GitHub.py"   
-            "BTC开空实盘阶梯挂单GitHub.py"
-            # "ETH开多实盘阶梯挂单GitHub.py"   
+            "ETH开空实盘阶梯挂单GitHub.py"
+            # "BTC开空实盘阶梯挂单GitHub.py"
+            # "ETH开多实盘阶梯挂单GitHub.py"
             # "BTC开多实盘阶梯挂单GitHub.py"
-            # 其他脚本
+            # 有其他脚本就加在这里
+            # "第二个脚本.py"
           )
 
+          # 主动运行 4小时55分 = 17700秒，提前结束避免被超时杀死
+          RUN_DURATION=17700
+
+          echo "=== 本轮运行开始，将在 4小时55分后主动结束 ==="
+
+          # 并行启动所有脚本
           pids=()
           for script in "${SCRIPTS[@]}"; do
             if [ -f "$script" ]; then
+              echo "启动脚本: $script"
               python "$script" &
               pids+=($!)
+            else
+              echo "警告: 脚本不存在 $script"
             fi
           done
 
-          # 运行 5 小时
-          sleep 18000
+          # 等待 4小时55分
+          sleep $RUN_DURATION
 
-          # 结束进程
+          # 主动结束所有进程
+          echo "=== 运行时间到，主动结束本轮 ==="
           for pid in "${pids[@]}"; do
             kill $pid || true
           done
+          pkill -f "python" || true
+          echo "所有进程已结束，准备触发下一轮..."
 
-  # 关键：跑完自动再触发一次自己，实现无限接力
+  # 关键：本轮正常结束后，自动触发下一轮
   trigger-next-run:
     needs: run-script
     runs-on: ubuntu-latest
+    # 这里需要给 GITHUB_TOKEN 开启仓库读写权限
+    permissions:
+      actions: write
     steps:
       - name: 触发下一轮运行
         uses: actions/github-script@v7
         with:
           script: |
-            github.rest.actions.createWorkflowDispatch({
+            await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: context.workflow,
               ref: context.ref
-            })
+            });
+            console.log("✅ 下一轮已成功触发！");
