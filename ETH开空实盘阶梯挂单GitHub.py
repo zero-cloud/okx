@@ -555,7 +555,7 @@ def main():
     #阶梯挂单数量
     n = 4
     #第一次挂单价
-    first_entry_price = 2300
+    first_entry_price = 2310
     #价格步长
     entry_price_step = 20
     #第一次止盈价
