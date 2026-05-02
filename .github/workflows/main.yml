@@ -6,8 +6,7 @@ on:
 jobs:
   run-script:
     runs-on: ubuntu-latest
-    # Job 超时设为 6 小时，给脚本 5 小时运行 + 55秒结束的缓冲
-    timeout-minutes: 360
+    timeout-minutes: 360  # 6小时上限，脚本会提前主动退出
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +23,7 @@ jobs:
 
       - name: 运行脚本（4小时55分后主动退出）
         run: |
-          # 在这里写你要运行的所有脚本
+          # 这里写你要运行的所有脚本
           SCRIPTS=(
             "ETH开空实盘阶梯挂单GitHub.py"
             # "BTC开空实盘阶梯挂单GitHub.py"
@@ -62,22 +61,21 @@ jobs:
           pkill -f "python" || true
           echo "所有进程已结束，准备触发下一轮..."
 
-  # 关键：本轮正常结束后，自动触发下一轮
   trigger-next-run:
     needs: run-script
     runs-on: ubuntu-latest
-    # 这里需要给 GITHUB_TOKEN 开启仓库读写权限
     permissions:
       actions: write
     steps:
       - name: 触发下一轮运行
         uses: actions/github-script@v7
         with:
+          # 【关键】直接写死工作流文件名（就是你这个yml文件的名字）
           script: |
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: context.workflow,
+              workflow_id: 'main.yml', // 改成你实际的文件名，比如main.yml
               ref: context.ref
             });
             console.log("✅ 下一轮已成功触发！");
